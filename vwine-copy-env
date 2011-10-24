@@ -43,6 +43,7 @@ if [ -e "$wineprefix" ]; then
     else
 	echo "Ovewriting existing environment '$wineprefix'"
     fi
+    WINEPREFIX="$wineprefix" wineserver --kill --wait
     rm -rf "$wineprefix"
 fi
 echo "Copying into '$wineprefix'"
