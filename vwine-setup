@@ -1,13 +1,15 @@
 #!/bin/bash
 
 
-OPTS=$(getopt -o c -l clean -- "$@")
+OPTS=$(getopt -o c,f -l clean,force -- "$@")
 [ $? != 0 ] && exit $?
 eval set -- "$OPTS"
 CLEAN=
+FORCE=
 while true ; do
     case "$1" in
 	-c|--clean) CLEAN=1 ; shift ;;
+	-f|--force) FORCE=1 ; shift ;;
 	--) shift; break ;;
 	*) echo "Internal error!" ; exit 100
     esac
@@ -20,15 +22,23 @@ fi
 
 basedir=$(dirname $(readlink -fn "$0"))
 wineprefix=$(readlink -fn "$1")
-if [ -n "$CLEAN" ] ; then
-    read -p "Really remove '$wineprefix' and all it's content? "
-    if [ "$REPLY" = "y" -o "$REPLY" = "Y" ] ; then
-	rm -rf "$wineprefix"
-    else
-	echo "Aborting."
+
+if [ -e "$wineprefix" ]; then
+    if [ -z "$CLEAN" ] ; then
+	echo "'$wineprefix' already exists. Aborting."
 	exit 1
+    elif [ -z "$FORCE" ] ; then
+	read -p "Really remove '$wineprefix' and all it's content? "
+	if [ "$REPLY" != "y" -a "$REPLY" != "Y" ] ; then
+	    echo "Aborting."
+	    exit 1
+        fi
     fi
+    echo "Ovewriting existing environment '$wineprefix'"
+    WINEPREFIX="$wineprefix" wineserver --kill --wait
+    rm -rf "$wineprefix"
 fi
+
 echo "Installing into '$wineprefix'"
 mkdir -p "$wineprefix"/bin
 
