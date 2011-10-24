@@ -1,0 +1,59 @@
+#!/bin/bash
+
+OPTS=$(getopt -o c,f -l clean,force -- "$@")
+[ $? != 0 ] && exit $?
+eval set -- "$OPTS"
+CLEAN=
+FORCE=
+while true ; do
+    case "$1" in
+	-c|--clean) CLEAN=1 ; shift ;;
+	-f|--force) FORCE=1 ; shift ;;
+	--) shift; break ;;
+	*) echo "Internal error!" ; exit 100
+    esac
+done
+
+if [ -z "$1" ] ; then
+    echo >&2 "Error: path to old virtual wine is required"
+    exit 10
+elif [ -z "$2" ] ; then
+    echo >&2 "Error: path to new virtual wine is required"
+    exit 10
+fi
+
+origenv=$(readlink -fn "$1")
+if [ ! -d "$origenv"/dosdevices -o ! -d "$origenv"/drive_c ] ; then
+    echo "dosdevices and drive_c not found at '$origenv'"
+    echo "Are you sure this is a wine install?"
+    exit 2
+fi
+wineprefix=$(readlink -fn "$2")
+
+if [ -e "$wineprefix" ]; then
+    if [ -z "$CLEAN" ] ; then
+	echo "'$wineprefix' already exists. Aborting."
+	exit 1
+    elif [ -z "$FORCE" ] ; then
+	read -p "Really remove '$wineprefix' and all it's content? "
+	if [ "$REPLY" != "y" -a "$REPLY" != "Y" ] ; then
+	    echo "Aborting."
+	    exit 1
+        fi
+    else
+	echo "Ovewriting existing environment '$wineprefix'"
+    fi
+    rm -rf "$wineprefix"
+fi
+echo "Copying into '$wineprefix'"
+mkdir -p $(dirname "$wineprefix")
+cp -a "$origenv" "$wineprefix"
+
+for fn in $(ls "$wineprefix"/bin) ; do
+    target="$wineprefix"/bin/"$fn"
+    if [ -f "$target" -a ! -h "$target" ] ; then 
+	sed -i -e "s!$origenv/!$wineprefix/!" "$target"
+    fi
+done
+
+#"$wineprefix"/bin/winecfg

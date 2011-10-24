@@ -1,0 +1,60 @@
+#!/bin/bash
+
+
+OPTS=$(getopt -o c -l clean -- "$@")
+[ $? != 0 ] && exit $?
+eval set -- "$OPTS"
+CLEAN=
+while true ; do
+    case "$1" in
+	-c|--clean) CLEAN=1 ; shift ;;
+	--) shift; break ;;
+	*) echo "Internal error!" ; exit 100
+    esac
+done
+
+if [ -z "$1" ] ; then
+    echo >&2 "Error: path to new virtual wine is required"
+    exit 10
+fi
+
+basedir=$(dirname $(readlink -fn "$0"))
+wineprefix=$(readlink -fn "$1")
+if [ -n "$CLEAN" ] ; then
+    read -p "Really remove '$wineprefix' and all it's content? "
+    if [ "$REPLY" = "y" -o "$REPLY" = "Y" ] ; then
+	rm -rf "$wineprefix"
+    else
+	echo "Aborting."
+	exit 1
+    fi
+fi
+echo "Installing into '$wineprefix'"
+mkdir -p "$wineprefix"/bin
+
+wine_exes="
+msiexec
+notepad
+regedit
+regsvr32
+wineboot
+winecfg
+wineconsole
+winefile
+winemine
+winepath
+wineserver
+"
+
+for fn in $(ls "$basedir"/bin) ; do
+    target="$wineprefix"/bin/"$fn"
+    [ -e "$target" ] && rm -f "$target"
+    cp -p "$basedir"/bin/"$fn" "$target"
+    sed -i -e "s!XX-BASENAME-XX!$wineprefix/!" "$target"
+done
+for fn in $wine_exes ; do
+    target="$wineprefix"/bin/"$fn"
+    [ -e "$target" ] && rm -f "$target"
+    ln -s ./wine "$target"
+done
+"$wineprefix"/bin/winecfg

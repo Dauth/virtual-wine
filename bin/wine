@@ -1,0 +1,7 @@
+#!/bin/sh
+
+exe=$(basename "$0")
+WINEPREFIX=$(readlink -fn 'XX-BASENAME-XX')
+export WINEPREFIX
+
+/usr/bin/$exe "$@"
