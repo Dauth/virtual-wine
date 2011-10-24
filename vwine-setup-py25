@@ -1,0 +1,26 @@
+#!/bin/bash
+
+PYVER=25
+
+WINREPO=~/devel/windows-repos
+WINEPREFIX=$WINREPO/wine-python$PYVER
+
+OPTS=$(getopt -o c,f -l clean,force -- "$@")
+[ $? != 0 ] && exit $?
+eval set -- "$OPTS"
+CLEAN=
+FORCE=
+while true ; do
+    case "$1" in
+	-c|--clean) CLEAN='--clean' ; shift ;;
+	-f|--force) FORCE='--force' ; shift ;;
+	--) shift; break ;;
+	*) echo "Internal error!" ; exit 100
+    esac
+done
+
+./vwine-setup $CLEAN $FORCE $WINEPREFIX
+[ $? != 0 ] && exit $?
+
+wineconsole $(winepath -w "$WINREPO"/py$PYVER/install.bat)
+
