@@ -1,13 +1,35 @@
 #!/bin/bash
+#
+# This file is part of `vwine`.
+#
+# Copyright 2011-2012 by Hartmut Goebel <h.goebel@goebel-consult.de>
+# Licence: GNU General Public License version 3 (GPL v3)
+# Version: 0.1
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 
 
-OPTS=$(getopt -o c -l clean -- "$@")
+OPTS=$(getopt -o c,f -l clean,force -- "$@")
 [ $? != 0 ] && exit $?
 eval set -- "$OPTS"
 CLEAN=
+FORCE=
 while true ; do
     case "$1" in
 	-c|--clean) CLEAN=1 ; shift ;;
+	-f|--force) FORCE=1 ; shift ;;
 	--) shift; break ;;
 	*) echo "Internal error!" ; exit 100
     esac
@@ -20,15 +42,23 @@ fi
 
 basedir=$(dirname $(readlink -fn "$0"))
 wineprefix=$(readlink -fn "$1")
-if [ -n "$CLEAN" ] ; then
-    read -p "Really remove '$wineprefix' and all it's content? "
-    if [ "$REPLY" = "y" -o "$REPLY" = "Y" ] ; then
-	rm -rf "$wineprefix"
-    else
-	echo "Aborting."
+
+if [ -e "$wineprefix" ]; then
+    if [ -z "$CLEAN" ] ; then
+	echo "'$wineprefix' already exists. Aborting."
 	exit 1
+    elif [ -z "$FORCE" ] ; then
+	read -p "Really remove '$wineprefix' and all it's content? "
+	if [ "$REPLY" != "y" -a "$REPLY" != "Y" ] ; then
+	    echo "Aborting."
+	    exit 1
+        fi
     fi
+    echo "Ovewriting existing environment '$wineprefix'"
+    WINEPREFIX="$wineprefix" wineserver --kill --wait
+    rm -rf "$wineprefix"
 fi
+
 echo "Installing into '$wineprefix'"
 mkdir -p "$wineprefix"/bin
 

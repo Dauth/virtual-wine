@@ -1,6 +1,38 @@
 # -*- mode: sh -*-
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly
+#
+# This file is part of `vwine`.
+#
+# Copyright 2011-2012 by Hartmut Goebel <h.goebel@goebel-consult.de>
+# Licence: GNU General Public License version 3 (GPL v3)
+# Version: 0.1
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# Based on work
+#  Copyright (c) 2007 Ian Bicking and Contributors
+#  Copyright (c) 2009 Ian Bicking, The Open Planning Project
+#  Copyright (c) 2011 The virtualenv developers
+# licensed under an MIT-style permissive license, see 
+# https://raw.github.com/pypa/virtualenv/master/LICENSE.txt
+#
+
+if [ "$0" = "$BASH_SOURCE" ] ; then
+    echo >&2 "This file has to be sourced!"
+    exit 2
+fi
 
 deactivate () {
     # reset old environment variables

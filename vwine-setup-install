@@ -1,0 +1,85 @@
+#!/usr/bin/env python
+#
+# Usage: vwine-setup PROFILE
+#
+# Setup a fresh virtual-wine and install Python into.
+# Installation is done by $WINREPO"/PROFILE/install.bat
+#
+#
+# This file is part of `vwine`.
+#
+# Copyright 2011-2012 by Hartmut Goebel <h.goebel@goebel-consult.de>
+# Licence: GNU General Public License version 3 (GPL v3)
+# Version: 0.1
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+
+WINREPO = '~/devel/windows-repos'
+
+import os
+import sys
+import argparse
+import subprocess
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-c', '--clean', action='store_true',
+                    help="If the vwine instance already exists, overwrite it")
+parser.add_argument('-f', '--force', action='store_true',
+                    help="Do not prompt before overwriting")
+parser.add_argument('--repository', default=WINREPO,
+                    help='Where predefined windows setup profiles resite '
+                         'and where the vwine instance will be created.')
+parser.add_argument('profile')
+args = parser.parse_args() 
+
+WINREPO = os.path.expanduser(args.repository)
+
+# get the name of the environment from the install.bat file
+installscript = os.path.join(WINREPO, args.profile, 'install.bat')
+if not os.path.exists(installscript):
+    raise SystemExit("Installscript %r not found" % installscript)
+try:
+    envname = open(installscript, 'rU').read().split()
+    envname = envname[envname.index('ENVNAME')+1]
+except (IndexError, ValueError):
+    raise SystemExit("Installscript %r is missing ENVNAME setting"
+                     % installscript)
+except IOError, e:
+    raise SystemExit(e)
+
+# wineprefix is the place where the new virtal-wine setup is created
+wineprefix = os.path.join(WINREPO, envname)
+
+# created the virtal-wine environment
+cmd = ['vwine-setup']
+if args.clean: cmd.append('--clean')
+if args.force: cmd.append('--force')
+cmd.append(wineprefix)
+rc = subprocess.call(cmd)
+if rc:
+    raise SystemExit(rc)
+
+with open(os.path.join(wineprefix, 'README.txt'), 'w') as of:
+    print >> of, 'This is a virtual wine environment created by',
+    print >> of, os.path.basename(sys.argv[0])
+    print >> of, 'and preinstalled software from then profile'
+    print >> of, args.profile
+
+# install the softwae into the virtal-wine environment
+installscript = subprocess.check_output(
+    ['winepath', '-w', installscript]).strip()
+rc = subprocess.call(['wineconsole', installscript])
+if rc:
+    raise SystemExit(rc)
