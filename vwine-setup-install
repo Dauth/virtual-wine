@@ -80,6 +80,6 @@ with open(os.path.join(wineprefix, 'README.txt'), 'w') as of:
 # install the softwae into the virtal-wine environment
 installscript = subprocess.check_output(
     ['winepath', '-w', installscript]).strip()
-rc = subprocess.call(['wineconsole', installscript])
+rc = subprocess.call(['wine', 'cmd', '/c', installscript])
 if rc:
     raise SystemExit(rc)
